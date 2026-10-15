@@ -1,0 +1,21 @@
+name: Verify shell bounty with prescribed Docker suites
+on:
+  push:
+    branches: [verify-posix-sh-fallback]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        python: [min, max]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: ./prime --env dst/test_python_max
+      - run: ./cmd/test_python_version --ci --python ${{ matrix.python }}
