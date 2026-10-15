@@ -1,4 +1,4 @@
-name: Verify shell bounty with prescribed Docker suites
+name: Verify shell bounty on fork
 on:
   push:
     branches: [verify-posix-sh-fallback]
@@ -11,11 +11,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: [min, max]
+        include:
+          - python: '3.7'
+            environment: min
+          - python: '3.14'
+            environment: max
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
-      - run: ./prime --env dst/test_python_max
-      - run: ./cmd/test_python_version --ci --python ${{ matrix.python }}
+          python-version: ${{ matrix.python }}
+      - run: ./prime --env dst/test_python_${{ matrix.environment }}
+      # The manual fetches the current branch from a hardcoded upstream URL.
+      # Resolve it to this fork, which actually contains the branch under test.
+      - run: git config --global url.https://github.com/andududu/protoprimer.git.insteadOf https://github.com/uvsmtid/protoprimer.git
+      - run: ./venv/bin/python -m pytest
+        env:
+          CI: 'true'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
